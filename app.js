@@ -42,12 +42,22 @@ document.addEventListener('DOMContentLoaded', () => {
         theme: 'dark'
     };
 
-    const HOLIDAYS_2026 = [
-        '2026-01-01', '2026-02-16', '2026-02-17', '2026-02-18', '2026-03-01', '2026-03-02',
-        '2026-05-05', '2026-05-24', '2026-05-25', '2026-06-03', '2026-06-06', '2026-07-17',
-        '2026-08-15', '2026-08-17', '2026-09-24', '2026-09-25', '2026-09-26', '2026-10-03',
-        '2026-10-05', '2026-10-09', '2026-12-25'
-    ];
+    /**
+     * Lunar Holiday Database (2026-2035)
+     * Includes Seollal (3 days), Chuseok (3 days), and Buddha's Birthday
+     */
+    const LUNAR_HOLIDAYS = {
+        2026: ['2026-02-16', '2026-02-17', '2026-02-18', '2026-05-24', '2026-05-25', '2026-09-24', '2026-09-25', '2026-09-26'],
+        2027: ['2027-02-06', '2027-02-07', '2027-02-08', '2027-05-13', '2027-09-14', '2027-09-15', '2027-09-16'],
+        2028: ['2028-01-26', '2028-01-27', '2028-01-28', '2028-05-02', '2028-09-30', '2028-10-01', '2028-10-02'],
+        2029: ['2029-02-12', '2029-02-13', '2029-02-14', '2029-05-20', '2029-09-21', '2029-09-22', '2029-09-23'],
+        2030: ['2030-02-02', '2030-02-03', '2030-02-04', '2030-05-09', '2030-09-11', '2030-09-12', '2030-09-13'],
+        2031: ['2031-01-22', '2031-01-23', '2031-01-24', '2031-05-28', '2031-09-30', '2031-10-01', '2031-10-02'],
+        2032: ['2032-02-10', '2032-02-11', '2032-02-12', '2032-05-16', '2032-09-18', '2032-09-19', '2032-09-20'],
+        2033: ['2033-01-30', '2033-01-31', '2033-02-01', '2033-05-06', '2033-09-07', '2033-09-08', '2033-09-09'],
+        2034: ['2034-02-18', '2034-02-19', '2034-02-20', '2034-05-25', '2034-09-26', '2034-09-27', '2034-09-28'],
+        2035: ['2035-02-07', '2035-02-08', '2035-02-09', '2035-05-15', '2035-09-15', '2035-09-16', '2035-09-17']
+    };
 
     const $ = (id) => document.getElementById(id);
 
@@ -97,19 +107,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const resTotalHours = $('res-total-hours');
     const resBase = $('res-base');
     const baseMath = $('base-math');
-    
     const lightingRow = $('lighting-row');
     const resLighting = $('res-lighting');
     const lightMath = $('light-math');
-    
     const coolingRow = $('cooling-row');
     const resCooling = $('res-cooling');
     const coolingMath = $('cooling-math');
-    
     const heatingRow = $('heating-row');
     const resHeating = $('res-heating');
     const heatingMath = $('heating-math');
-
     const resSubtotal = $('res-subtotal');
     const resDiscountLabel = $('res-discount-label');
     const resDiscount = $('res-discount');
@@ -257,7 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const rawSessionDates = getSessionDates(state.startDate, state.endDate, allowedDays, state.excludeHolidays);
         
         const parseExcluded = (str) => str.split(',').map(s => s.trim()).filter(s => s.length > 0);
-        
         const baseExcludes = parseExcluded(state.baseExcludeDates);
         const sessionDates = rawSessionDates.filter(d => !baseExcludes.includes(d));
         const totalSessions = Math.max(0, sessionDates.length + state.baseAdjDays);
@@ -274,7 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const heatingSessions = calcFacSessions(state.useHeating, state.heatingStart, state.heatingEnd, state.heatingExcludeDates, state.heatingAdjDays);
 
         const hvacSurchargeRate = baseRate * 0.2;
-
         const totalHours = totalSessions * state.duration;
         const baseAmount = totalSessions * state.duration * baseRate;
         const lightingAmount = lightSessions * state.lightHours * state.lightRate;
@@ -288,7 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setText(resSessionCount, `${totalSessions}${state.mode === 'long' ? '회' : '일'}`);
         setText(resTotalHours, `${formatNumber(totalHours)}시간`);
-        
         setText(resBase, `${formatNumber(baseAmount)}원`);
         setText(baseMath, `단가 ${formatNumber(baseRate)}원 × ${state.duration}시간 × ${totalSessions}${state.mode === 'long' ? '회' : '일'}`);
 
@@ -301,10 +304,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        const sessText = state.mode === 'long' ? '회' : '일';
-        updateFacRow(state.useLighting, lightingRow, resLighting, lightMath, lightingAmount, `단가 ${formatNumber(state.lightRate)}원 × ${state.lightHours}시간 × ${lightSessions}${sessText}`);
-        updateFacRow(state.useCooling, coolingRow, resCooling, coolingMath, coolingAmount, `기본료 20%(${formatNumber(hvacSurchargeRate)}원) × ${state.coolingHours}시간 × ${coolingSessions}${sessText}`);
-        updateFacRow(state.useHeating, heatingRow, resHeating, heatingMath, heatingAmount, `기본료 20%(${formatNumber(hvacSurchargeRate)}원) × ${state.heatingHours}시간 × ${heatingSessions}${sessText}`);
+        const sessT = state.mode === 'long' ? '회' : '일';
+        updateFacRow(state.useLighting, lightingRow, resLighting, lightMath, lightingAmount, `단가 ${formatNumber(state.lightRate)}원 × ${state.lightHours}시간 × ${lightSessions}${sessT}`);
+        updateFacRow(state.useCooling, coolingRow, resCooling, coolingMath, coolingAmount, `기본료 20%(${formatNumber(hvacSurchargeRate)}원) × ${state.coolingHours}시간 × ${coolingSessions}${sessT}`);
+        updateFacRow(state.useHeating, heatingRow, resHeating, heatingMath, heatingAmount, `기본료 20%(${formatNumber(hvacSurchargeRate)}원) × ${state.heatingHours}시간 × ${heatingSessions}${sessT}`);
 
         setText(resSubtotal, `${formatNumber(subtotal)}원`);
         setText(resDiscountLabel, `${Math.round(discountRate * 100)}%`);
@@ -319,6 +322,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setText(el, val) { if (el) el.textContent = val; }
+    
+    function isHoliday(dateStr) {
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const dayOfWeek = date.getDay(); // 0: Sun, 6: Sat
+
+        // 1. Solar Fixed Holidays
+        const solarHolidays = [
+            '01-01', '03-01', '05-05', '06-06', '08-15', '10-03', '10-09', '12-25'
+        ];
+        const mmdd = `${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        
+        if (solarHolidays.includes(mmdd)) return true;
+
+        // 2. Substitute Holidays for Solar (if Sat/Sun)
+        // Simplified: If solar holiday is Sunday, next Monday is holiday.
+        // If it's Saturday, some years/holidays have substitute (3.1, 8.15, 10.3, 10.9, 5.5).
+        for (let h of solarHolidays) {
+            const [hM, hD] = h.split('-').map(Number);
+            const hDate = new Date(year, hM - 1, hD);
+            const hDay = hDate.getDay();
+            
+            if (hDay === 0) { // Sunday
+                const subDate = new Date(year, hM - 1, hD + 1);
+                if (subDate.getTime() === date.getTime()) return true;
+            } else if (hDay === 6 && ['03-01', '05-05', '08-15', '10-03', '10-09'].includes(h)) { // Saturday
+                const subDate = new Date(year, hM - 1, hD + 2); // Next Monday
+                if (subDate.getTime() === date.getTime()) return true;
+            }
+        }
+
+        // 3. Lunar Holidays from Database (2026-2035)
+        if (LUNAR_HOLIDAYS[year] && LUNAR_HOLIDAYS[year].includes(dateStr)) return true;
+
+        // 4. Substitute for Lunar (if Sun)
+        if (LUNAR_HOLIDAYS[year]) {
+            for (let lH of LUNAR_HOLIDAYS[year]) {
+                const lHDate = new Date(lH);
+                if (lHDate.getDay() === 0) { // If any lunar holiday is Sunday
+                    const subDate = new Date(lHDate);
+                    subDate.setDate(subDate.getDate() + 1);
+                    // If the subDate itself is already a lunar holiday, push further
+                    while (LUNAR_HOLIDAYS[year].includes(subDate.toISOString().split('T')[0])) {
+                        subDate.setDate(subDate.getDate() + 1);
+                    }
+                    if (subDate.getTime() === date.getTime()) return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     function getSessionDates(start, end, allowedDays, skipHolidays) {
         if (!start || !end || allowedDays.length === 0) return [];
         const dates = [];
@@ -327,12 +385,12 @@ document.addEventListener('DOMContentLoaded', () => {
         while (cur <= last) {
             const dateStr = cur.toISOString().split('T')[0];
             const isAllowedDay = allowedDays.includes(cur.getDay());
-            const isHoliday = HOLIDAYS_2026.includes(dateStr);
-            if (isAllowedDay && !(skipHolidays && isHoliday)) dates.push(dateStr);
+            if (isAllowedDay && !(skipHolidays && isHoliday(dateStr))) dates.push(dateStr);
             cur.setDate(cur.getDate() + 1);
         }
         return dates;
     }
+
     function isWithinRange(dateStr, start, end) { return start && end && dateStr >= start && dateStr <= end; }
     function updateVisibility(isActive, element) { if (element) element.classList.toggle('hidden', !isActive); }
     function animateNumber(element, target) {
